@@ -1,0 +1,44 @@
+1.   create external table movies1(
+id INT,
+title STRING,
+genres STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY "^"
+STORED AS TEXTFILE
+LOCATION '/user/prasad/movies1/input'
+TBLPROPERTIES('skip.header.line.count'='1')
+
+
+2.   select count(id) from movies1 where ARRAY_CONTAINS(split(genres, '\\|'), "Action");
+
++-------+
+|  _c0  |
++-------+
+| 1545  |
++-------+
+
+
+
+create external table movies2(
+id INT,
+title STRING,
+genres ARRAY<STRING>
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY "^"
+COLLECTION ITEMS TERMINATED BY '|'
+STORED AS TEXTFILE
+LOCATION '/user/sarang/movies1/input'
+TBLPROPERTIES('skip.header.line.count'='1');
+
+
+3.   select count(id) from movies2 where size(genres)=1;
+
++-------+
+|  _c0  |
++-------+
+| 2793  |
++-------+
+
+

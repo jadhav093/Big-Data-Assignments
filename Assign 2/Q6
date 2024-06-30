@@ -1,0 +1,16 @@
+create external table busstops(`_id` STRUCT<`$oid`:STRING>, stop STRING, code STRING, seq DOUBLE, stage DOUBLE, name STRING, location STRUCT<type:STRING, coordinates:ARRAY<DOUBLE>>) ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe' STORED AS TEXTFILE LOCATION '/user/sarang/busstops/input';
+
++--------------------------------------+----------------+----------------+---------------+-----------------+--------------------------+----------------------------------------------------+
+|             busstops._id             | busstops.stop  | busstops.code  | busstops.seq  | busstops.stage  |      busstops.name       |                 busstops.location                  |
++--------------------------------------+----------------+----------------+---------------+-----------------+--------------------------+----------------------------------------------------+
+| {"$oid":"5a0720b478597fc11004d951"}  | Non-BRTS       | 103B-D-04      | 4.0           | 1.0             | Aranyeshwar Corner       | {"type":"Point","coordinates":[73.857675,18.486381]} |
+| {"$oid":"5a0720b478597fc11004d952"}  | Non-BRTS       | 103B-D-05      | 5.0           | 2.0             | Natubaug                 | {"type":"Point","coordinates":[73.857167,18.48103]} |
+| {"$oid":"5a0720b478597fc11004d953"}  | Non-BRTS       | 103B-D-07      | 7.0           | 2.0             | Shankar Maharaj Math     | {"type":"Point","coordinates":[73.857234,18.470738]} |
+| {"$oid":"5a0720b478597fc11004d954"}  | Non-BRTS       | 103B-D-06      | 6.0           | 2.0             | Padmawati                | {"type":"Point","coordinates":[73.857244,18.477347]} |
+| {"$oid":"5a0720b478597fc11004d955"}  | Non-BRTS       | 103B-D-08      | 8.0           | 3.0             | Balajinagar              | {"type":"Point","coordinates":[73.858154,18.464405]} |
+| {"$oid":"5a0720b478597fc11004d95b"}  | Non-BRTS       | 103B-D-09      | 9.0           | 3.0             | Bharati Vidyapeeth Gate  | {"type":"Point","coordinates":[73.8582,18.457434]} |
+| {"$oid":"5a0720b478597fc11004d95d"}  | Non-BRTS       | 103B-U-03      | 3.0           | 1.0             | Bharati Vidyapeeth Gate  | {"type":"Point","coordinates":[73.858154,18.457616]} |
+| {"$oid":"5a0720b478597fc11004d95e"}  | Non-BRTS       | 103B-U-04      | 4.0           | 2.0             | Balajinagar              | {"type":"Point","coordinates":[73.857973,18.464558]} |
+| {"$oid":"5a0720b478597fc11004d95f"}  | Non-BRTS       | 103B-U-05      | 5.0           | 2.0             | Shankar Maharaj Math     | {"type":"Point","coordinates":[73.857067,18.470349]} |
++--------------------------------------+----------------+----------------+---------------+-----------------+--------------------------+----------------------------------------------------+
+

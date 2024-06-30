@@ -1,0 +1,269 @@
+1   CREATE TABLE emp_staging(
+empno INT,
+ename STRING,
+job STRING,
+mgr INT,
+hire DATE,
+sal DOUBLE,
+comm DOUBLE,
+deptno INT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+---------------------------------------------------------------------------------
+
+2.    CREATE TABLE dept_staging(
+deptno INT,
+dname VARCHAR(40),
+loc STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+
+LOAD DATA LOCAL INPATH
+'/home/sarang/sunbeam_material/BigData/data/emp.csv'
+into table emp_staging;
+
+LOAD DATA LOCAL INPATH
+'/home/sarang/sunbeam_material/BigData/data/dept.csv'
+into table dept_staging;
+
+---------------------------------------------------------------------------------
+3.   select d.dname, count(e.empno) cnt from emp_staging e inner join dept_staging d on e.deptno=d.deptno group by d.dname;
+
++-------------+------+
+|   d.dname   | cnt  |
++-------------+------+
+| ACCOUNTING  | 3    |
+| RESEARCH    | 5    |
+| SALES       | 6    |
++-------------+------+
+
+---------------------------------------------------------------------------------
+4. Display emp name and his dept name.
+
+select e.ename, d.dname, d.deptno from emp_staging e inner join dept_staging d on e.deptno = d.deptno
+
++----------+-------------+-----------+
+| e.ename  |   d.dname   | d.deptno  |
++----------+-------------+-----------+
+| SMITH    | RESEARCH    | 20        |
+| ALLEN    | SALES       | 30        |
+| WARD     | SALES       | 30        |
+| JONES    | RESEARCH    | 20        |
+| MARTIN   | SALES       | 30        |
+| BLAKE    | SALES       | 30        |
+| CLARK    | ACCOUNTING  | 10        |
+| SCOTT    | RESEARCH    | 20        |
+| KING     | ACCOUNTING  | 10        |
+| TURNER   | SALES       | 30        |
+| ADAMS    | RESEARCH    | 20        |
+| JAMES    | SALES       | 30        |
+| FORD     | RESEARCH    | 20        |
+| MILLER   | ACCOUNTING  | 10        |
++----------+-------------+-----------+
+
+
+---------------------------------------------------------------------------------
+5. Display all emps (name, job, deptno) with their manager (name, job, deptno), who are not in their department.
+select e1.ename, e1.job, e1.deptno, e2.ename, e2.job, e2.deptno from emp_staging e1 inner join emp_staging e2 on e1.mgr=e2.empno where e1.deptno<>e2.deptno;
+
+
+
++-----------+----------+------------+-----------+------------+------------+
+| e1.ename  |  e1.job  | e1.deptno  | e2.ename  |   e2.job   | e2.deptno  |
++-----------+----------+------------+-----------+------------+------------+
+| JONES     | MANAGER  | 20         | KING      | PRESIDENT  | 10         |
+| BLAKE     | MANAGER  | 30         | KING      | PRESIDENT  | 10         |
++-----------+----------+------------+-----------+------------+------------+
+---------------------------------------------------------------------------------
+
+
+# 6. Display all manager names with list of all dept names (where they can work).
+
+select e2.ename, d.dname from emp_staging e1 inner join emp_staging e2 on e1.mgr=e2.empno inner join dept_staging d on e2.deptno=d.deptno;
+
+
++-----------+-------------+
+| e2.ename  |   d.dname   |
++-----------+-------------+
+| FORD      | RESEARCH    |
+| BLAKE     | SALES       |
+| BLAKE     | SALES       |
+| KING      | ACCOUNTING  |
+| BLAKE     | SALES       |
+| KING      | ACCOUNTING  |
+| KING      | ACCOUNTING  |
+| JONES     | RESEARCH    |
+| BLAKE     | SALES       |
+| SCOTT     | RESEARCH    |
+| BLAKE     | SALES       |
+| JONES     | RESEARCH    |
+| CLARK     | ACCOUNTING  |
++-----------+-------------+
+
+
+**** select ename, collect_list(dname) from emp_staging e inner join dept_staging d where e.job="MANAGER" group by ename;+--------+-------------------------------------------------+
+| ename  |                       _c1                       |
++--------+-------------------------------------------------+
+| BLAKE  | ["ACCOUNTING","RESEARCH","SALES","OPERATIONS"]  |
+| CLARK  | ["ACCOUNTING","RESEARCH","SALES","OPERATIONS"]  |
+| JONES  | ["ACCOUNTING","RESEARCH","SALES","OPERATIONS"]  |
++--------+-------------------------------------------------+
+
+---------------------------------------------------------------------------------
+
+
+7. Display job-wise total salary along with total salary of all employees.
+
+select job, sum(sal), (select sum(sal) from emp_staging) tot_sal from emp_staging group by job;
+
++------------+---------+----------+
+|    job     |   _c1   | tot_sal  |
++------------+---------+----------+
+| ANALYST    | 6000.0  | 29025.0  |
+| CLERK      | 4150.0  | 29025.0  |
+| MANAGER    | 8275.0  | 29025.0  |
+| PRESIDENT  | 5000.0  | 29025.0  |
+| SALESMAN   | 5600.0  | 29025.0  |
++------------+---------+----------+
+
+---------------------------------------------------------------------------------
+
+
+8. Display dept-wise total salary along with total salary of all employees.
+
+select d.dname, sum(e.sal) , (select sum(sal) from emp_staging) from emp_staging e inner join dept_staging d on e.deptno = d.deptno group by d.dname;
+
+
++-------------+----------+----------+
+|   d.dname   |   _c1    |   _c2    |
++-------------+----------+----------+
+| ACCOUNTING  | 8750.0   | 29025.0  |
+| RESEARCH    | 10875.0  | 29025.0  |
+| SALES       | 9400.0   | 29025.0  |
++-------------+----------+----------+
+
+
+---------------------------------------------------------------------------------
+
+
+## 9. Display per dept job-wise total salary along with total salary of all employees.
+
+select deptno, job, sum(sal) from emp_staging group by deptno, job with cube;
+
+
++---------+------------+----------+
+| deptno  |    job     |   _c2    |
++---------+------------+----------+
+| NULL    | NULL       | 29025.0  |
+| 10      | NULL       | 8750.0   |
+| 20      | NULL       | 10875.0  |
+| 30      | NULL       | 9400.0   |
+| NULL    | ANALYST    | 6000.0   |
+| 20      | ANALYST    | 6000.0   |
+| NULL    | CLERK      | 4150.0   |
+| 10      | CLERK      | 1300.0   |
+| 20      | CLERK      | 1900.0   |
+| 30      | CLERK      | 950.0    |
+| NULL    | MANAGER    | 8275.0   |
+| 10      | MANAGER    | 2450.0   |
+| 20      | MANAGER    | 2975.0   |
+| 30      | MANAGER    | 2850.0   |
+| NULL    | PRESIDENT  | 5000.0   |
+| 10      | PRESIDENT  | 5000.0   |
+| NULL    | SALESMAN   | 5600.0   |
+| 30      | SALESMAN   | 5600.0   |
++---------+------------+----------+
+---------------------------------------------------------------------------------
+
+
+10. Display number of employees recruited per year in descending order of employee count.
+
+select year(hire), count(empno) from emp_staging group by year(hire) order by year(hire);
+
+
++-------+------+
+|  _c0  | _c1  |
++-------+------+
+| 1981  | 10   |
+| 1982  | 2    |
+| 1983  | 1    |
+| 1980  | 1    |
++-------+------+
+
+---------------------------------------------------------------------------------
+
+
+11. Display unique job roles who gets commission.
+
+select distinct job from emp_staging where comm>0;
+
+
++-----------+
+|    job    |
++-----------+
+| SALESMAN  |
++-----------+
+
+---------------------------------------------------------------------------------
+
+
+12. Display dept name in which there is no employee (using sub-query).
+
+select dname from dept_staging where deptno not in(select deptno from emp_staging);
+
++-------------+
+|    dname    |
++-------------+
+| OPERATIONS  |
++-------------+
+
+---------------------------------------------------------------------------------
+
+
+13. Display emp-name, dept-name, salary, total salary of that dept (using sub-query).
+
+
+select e.ename, (select dname from dept_staging d where d.deptno=e.deptno) dname, sal, (select sum(sal) from emp_staging e1 where e1.deptno=e.deptno group by deptno) tot_sal from emp_staging e;
+
+
++----------+-------------+---------+----------+
+| e.ename  |    dname    |   sal   | tot_sal  |
++----------+-------------+---------+----------+
+| SMITH    | RESEARCH    | 800.0   | 10875.0  |
+| ALLEN    | SALES       | 1600.0  | 9400.0   |
+| WARD     | SALES       | 1250.0  | 9400.0   |
+| JONES    | RESEARCH    | 2975.0  | 10875.0  |
+| MARTIN   | SALES       | 1250.0  | 9400.0   |
+| BLAKE    | SALES       | 2850.0  | 9400.0   |
+| CLARK    | ACCOUNTING  | 2450.0  | 8750.0   |
+| SCOTT    | RESEARCH    | 3000.0  | 10875.0  |
+| KING     | ACCOUNTING  | 5000.0  | 8750.0   |
+| TURNER   | SALES       | 1500.0  | 9400.0   |
+| ADAMS    | RESEARCH    | 1100.0  | 10875.0  |
+| JAMES    | SALES       | 950.0   | 9400.0   |
+| FORD     | RESEARCH    | 3000.0  | 10875.0  |
+| MILLER   | ACCOUNTING  | 1300.0  | 8750.0   |
++----------+-------------+---------+----------+
+---------------------------------------------------------------------------------
+
+
+14. Display all managers and presidents along with number of (immediate) subbordinates.
+
+
+select e2.ename name, count(e2.empno) cnt from emp e1 inner join emp e2 on e1.mgr=e2.empno where e2.job in ('MANAGER','PRESIDENT') group by e2.ename;
+
+
++-------+-----+
+| name  | cnt |
++-------+-----+
+| BLAKE |   5 |
+| KING  |   3 |
+| JONES |   2 |
+| CLARK |   1 |
++-------+-----+

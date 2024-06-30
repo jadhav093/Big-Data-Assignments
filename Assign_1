@@ -1,0 +1,134 @@
+hive> CREATE TABLE Customers (
+    >     CustomerID INT,
+    >     Name VARCHAR(100),
+    >     Age INT,
+    >     LocationID INT
+    > )
+    > ROW FORMAT DELIMITED
+    > FIELDS TERMINATED BY ','
+    > STORED AS TEXTFILE;
+OK
+Time taken: 4.643 seconds
+--------------------------------------------------------------------------------
+
+A. Retrieve the names of all customers who made a purchase.
+select c.name from customers as c inner join sales as s on c.customerid=s.customerid where s.quantity>=1;
++----------------+
+|     c.name     |
++----------------+
+| John Doe       |
+| Jane Smith     |
+| Bob Johnson    |
+| Alice Brown    |
+| Charlie Davis  |
++----------------+
+5 rows selected (38.124 seconds)
+
+
+
+B. List the products and their total sales amounts for a given date range.
+
+select p.productname, s.salesdate,s.totalamount from products as p right join sales as s on p.productid=s.productid;
++----------------+--------------+----------------+
+| p.productname  | s.salesdate  | s.totalamount  |
++----------------+--------------+----------------+
+| Laptop         | 2023-01-01   | 1600.00        |
+| T-shirt        | 2023-01-02   | 60.00          |
+| Smartphone     | 2023-01-03   | 400.00         |
+| Shoes          | 2023-02-01   | 100.00         |
+| Bookshelf      | 2023-02-02   | 150.00         |
++----------------+--------------+----------------+
+5 rows selected (31.178 seconds)
+
+
+
+C. Find the total sales amount for each product category.
+select p.category ,sum(s.totalamount) from products as p left join sales as s on s.productid=p.productid group by p.category;
+
++--------------+----------+
+|  p.category  |   _c1    |
++--------------+----------+
+| Clothing     | 60.00    |
+| Electronics  | 2000.00  |
+| Footwear     | 100.00   |
+| Furniture    | 150.00   |
++--------------+----------+
+
+
+D. Identify the customers who made purchases in a specic city.
+select l.city ,c.name,s.quantity from locations as l right join customers as c on c.locationid=l.locationtd left join sales as s on s.customerid=c.customerid where s.quantity>=1;
++------------+----------------+-------------+
+|   l.city   |     c.name     | s.quantity  |
++------------+----------------+-------------+
+| Pune       | John Doe       | 2           |
+| Mumbai     | Jane Smith     | 3           |
+| Pune       | Bob Johnson    | 1           |
+| Bangalore  | Alice Brown    | 2           |
+| Mumbai     | Charlie Davis  | 1           |
++------------+----------------+-------------+
+5 rows selected (41.796 seconds)
+
+
+E. Calculate the average age of customers who bought products in the 'Electronics' category.
+elect products.category,avg(customers.age) from customers inner join sales on sales.customerid=customers.customerid inner join products on products.productid=sales.productid group by products.category having products.category="Electronics";
++--------------------+-------+
+| products.category  |  _c1  |
++--------------------+-------+
+| Electronics        | 32.5  |
++--------------------+-------+
+1 row selected (45.71 seconds)
+
+F. List the top 3 products based on total sales amount.
+select salesid, totalamount from sales order by totalamount DESC limit 3;
++----------+--------------+
+| salesid  | totalamount  |
++----------+--------------+
+| 1        | 1600.00      |
+| 3        | 400.00       |
+| 5        | 150.00       |
++----------+--------------+
+3 rows selected (36.726 seconds)
+
+
+
+G. Find the total sales amount for each month.
+select sum(totalamount) as amount ,month(salesdate) as month from sales group by month(salesdate);
++----------+--------+
+|  amount  | month  |
++----------+--------+
+| 2060.00  | 1      |
+| 250.00   | 2      |
++----------+--------+
+
+
+H. Identify the products with no sales.
+select * from sales where quantity=0;
++----------------+-------------------+------------------+------------------+-----------------+--------------------+
+| sales.salesid  | sales.customerid  | sales.productid  | sales.salesdate  | sales.quantity  | sales.totalamount  |
++----------------+-------------------+------------------+------------------+-----------------+--------------------+
++----------------+-------------------+------------------+------------------+-----------------+--------------------+
+No rows selected (0.957 seconds)
+
+
+
+I. Calculate the total sales amount for each state.
+ select l.state ,sum(s.totalamount) from customers as c inner join sales as s on s.customerid=c.customerid inner join locations as l on l.locationtd=c.locationid group by l.state;
+J+--------------+----------+
+|   l.state    |   _c1    |
++--------------+----------+
+| Karnataka    | 100.00   |
+| Maharashtra  | 2210.00  |
++--------------+----------+
+
+J. Retrieve the customer names and their highest purchase amount
+select c.name,max(s.totalamount) from customers as c left join sales as s.customerid=c.customerid;
++----------------+----------+
+|     c.name     |   _c1    |
++----------------+----------+
+| Alice Brown    | 100.00   |
+| Bob Johnson    | 400.00   |
+| Charlie Davis  | 150.00   |
+| Jane Smith     | 60.00    |
+| John Doe       | 1600.00  |
++----------------+----------+
+5 rows selected (35.546 seconds)

@@ -1,0 +1,63 @@
+# movie recommondation system
+
+CREATE TABLE ratings_staging(
+userId INT,
+movieId INT,
+rating DOUBLE,
+rtime BIGINT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+TBLPROPERTIES('skip.header.line.count'='1');
+
+
+LOAD DATA LOCAL
+INPATH '/home/nilesh/mar24/dbda/BigData/data/tratings.csv'
+INTO TABLE tratings;
+
+create table ratings as select * from ratings_staging;
+
+create table movie_ratings as
+select m1, (select title from movies m where m.movieid=t1.m1) movie1, m2, (select title from movies m where m.movieid=t1.m2) movie2, t1.`_c2` cor from cor_table t1 where t1.`_c2`>0.8;
+
+
+CREATE TABLE cor_movies AS
+SELECT t1.movieId m1, t2.movieId m2, t1.rating r1, t2.rating r2 FROM ratings t1 INNER JOIN ratings t2 ON t1.userId = t2.userId
+WHERE t1.movieId < t2.movieId;
+
+
+CREATE TABLE movies_staging(
+movieId INT,
+title STRING,
+genres STRING
+)
+ROW FORMAT
+SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+WITH SERDEPROPERTIES (
+'separatorChar'=',',
+'quoteChar'='"',
+'escapeChar'='\\'
+)
+STORED AS TEXTFILE
+TBLPROPERTIES('skip.header.line.count'='1');
+
+
+LOAD DATA LOCAL INPATH '/tmp/movies/movies.csv'
+INTO TABLE movies_staging;
+
+
+CREATE TABLE movies(
+id INT,
+title STRING,
+genres ARRAY<STRING>
+)
+STORED AS ORC
+TBLPROPERTIES('transactional'='true');
+
+
+INSERT INTO movies
+SELECT movieId, title, SPLIT(genres, '\\|') FROM movies_staging;
+
+
+

@@ -1,0 +1,122 @@
+	Execute following queries for books.csv dataset.
+
+
+---------------------------------------------------------------------------------
+1. Create table "books_staging" and load books.csv in it.
+
+
+1. create table books_staging(
+. . . . . . . . . . . . . . . . . . . .> id INT,
+. . . . . . . . . . . . . . . . . . . .> title STRING,
+. . . . . . . . . . . . . . . . . . . .> author STRING,
+. . . . . . . . . . . . . . . . . . . .> subject STRING,
+. . . . . . . . . . . . . . . . . . . .> price DOUBLE
+. . . . . . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . . . . . .> ROW FORMAT DELIMITED
+. . . . . . . . . . . . . . . . . . . .> FIELDS TERMINATED BY ','
+. . . . . . . . . . . . . . . . . . . .> STORED AS TEXTFILE;
+
+---------------------------------------------------------------------------------
+
+
+2. Create table "books_orc" as transactional table.
+
+create table books_orc(
+. . . . . . . . . . . . . . . . . . . .> id INT,
+. . . . . . . . . . . . . . . . . . . .> title STRING,
+. . . . . . . . . . . . . . . . . . . .> author STRING,
+. . . . . . . . . . . . . . . . . . . .> subject string,
+. . . . . . . . . . . . . . . . . . . .> price double
+. . . . . . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . . . . . .> stored as orc
+. . . . . . . . . . . . . . . . . . . .> tblproperties('transactional'='true');
+
+---------------------------------------------------------------------------------
+
+
+3. Create a materialized view for summary -- Subjectwise average book price.
+
+create materialized view v_summ as
+. . . . . . . . . . . . . . . . . . . .> select subject, avg(price) from books_orc group by subject;
+
+---------------------------------------------------------------------------------
+
+
+4. Display a report that shows subject and average price in descending order -- on materialized view.
+
+
+
+select subject, `_c1` from v_summ order by `_c1` desc;
+
++--------------------+--------------------+
+|      subject       |        _c1         |
++--------------------+--------------------+
+| C++ Programming    | 675.214            |
+| Java Programming   | 519.67             |
+| Operating Systems  | 447.3836666666666  |
+| C Programming      | 242.20275          |
++--------------------+--------------------+
+
+
+5.   created
+
+
+6.  load data local inpath '/home/sarang/sunbeam_material/books/newbooks.csv' into table books_staging;
+
+
+7.   insert into books_orc select b1.id, b1.title, b1.author, b1.subject, b1.price from books_staging b1 left join books_orc b2 on b1.id=b2.id where b2.id is NULL;
+
+8.   NO
+
+
+9.   alter materialized view v_summ rebuild;
+
+
+
+10.   +--------------------+--------------------+
+|      subject       |        _c1         |
++--------------------+--------------------+
+| Novel              | 726.6099999999999  |
+| C++ Programming    | 675.214            |
+| Java Programming   | 519.67             |
+| Operating Systems  | 447.3836666666666  |
+| C Programming      | 242.20275          |
++--------------------+--------------------+
+
+
+
+11.  update books_orc set price=price+(price/10) where subject='Java Programming';
+
+
+12.   alter materialized view v_summ rebuild;
+
+
+13.   select subject, `_c1` from v_summ order by `_c1` desc;
+
++--------------------+--------------------+
+|      subject       |        _c1         |
++--------------------+--------------------+
+| Novel              | 726.6099999999999  |
+| C++ Programming    | 675.214            |
+| Java Programming   | 571.6370000000001  |
+| Operating Systems  | 447.3836666666666  |
+| C Programming      | 242.20275          |
++--------------------+--------------------+
+
+
+14.   delete from books_orc where subject='Java Programming';
+
+
+15.   alter materialized view v_summ rebuild;
+
+
+16.   select subject, `_c1` from v_summ order by `_c1` desc;
+
++--------------------+--------------------+
+|      subject       |        _c1         |
++--------------------+--------------------+
+| Novel              | 726.6099999999999  |
+| C++ Programming    | 675.214            |
+| Operating Systems  | 447.3836666666666  |
+| C Programming      | 242.20275          |
++--------------------+--------------------+

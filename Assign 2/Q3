@@ -1,0 +1,94 @@
+
+## Execute following queries on "emp" and "dept" dataset using CTE.
+---------          --------------        --------------        ----------------
+----------------------------------------------------------------------------------
+1. Find emp with max sal of each dept.
+
+with cte as (select ename, sal,job, dense_rank() over(partition by deptno order by sal desc) rnk from emp_staging) select ename, job, sal from cte where rnk=1;
+
++-------+---------+
+| ename | sal     |
++-------+---------+
+| KING  | 5000.00 |
+| SCOTT | 3000.00 |
+| FORD  | 3000.00 |
+| BLAKE | 2850.00 |
++-------+---------+
+
+----------------------------------------------------------------------------------
+2. Find avg of deptwise total sal.
+
+ with cte as (select sum(sal) tot_sal from emp_staging group by deptno) select avg(tot_sal) from cte;
+
+
++---------+
+|   _c0   |
++---------+
+| 9675.0  |
++---------+
+
+----------------------------------------------------------------------------------
+3. Compare (show side-by-side) sal of each emp with avg sal in his dept and avg sal for his job.
+
+with cte1 as (select deptno, avg(sal) dep_sal from emp_staging group by deptno), cte2 as (select job, avg(sal) job_sal from emp_staging group by job) select e.ename, dep_sal, job_sal from cte1 c1 inner join emp_staging e on c1.deptno=e.deptno inner join cte2 c2 on e.job=c2.job;
+
++----------+---------------------+---------------------+
+| e.ename  |       dep_sal       |       job_sal       |
++----------+---------------------+---------------------+
+| CLARK    | 2916.6666666666665  | 2758.3333333333335  |
+| KING     | 2916.6666666666665  | 5000.0              |
+| MILLER   | 2916.6666666666665  | 1037.5              |
+| SMITH    | 2175.0              | 1037.5              |
+| JONES    | 2175.0              | 2758.3333333333335  |
+| SCOTT    | 2175.0              | 3000.0              |
+| ADAMS    | 2175.0              | 1037.5              |
+| FORD     | 2175.0              | 3000.0              |
+| ALLEN    | 1566.6666666666667  | 1400.0              |
+| WARD     | 1566.6666666666667  | 1400.0              |
+| MARTIN   | 1566.6666666666667  | 1400.0              |
+| BLAKE    | 1566.6666666666667  | 2758.3333333333335  |
+| TURNER   | 1566.6666666666667  | 1400.0              |
+| JAMES    | 1566.6666666666667  | 1037.5              |
++----------+---------------------+---------------------+
+----------------------------------------------------------------------------------
+
+4. Divide emps by category -- Poor < 1500, 1500 <= Middle <= 2500, Rich > 2500. Hint: CASE ... WHEN. Count emps for each category.
+
+with cte as (select case when sal < 1500 then 'poor' when sal >=1500 and sal <=2500 then 'middle' when sal > 2500 then 'rich' end as status, sal from emp_staging) select status, count(sal) from cte group by status;
+
+
++---------+------+
+| status  | _c1  |
++---------+------+
+| middle  | 3    |
+| poor    | 6    |
+| rich    | 5    |
++---------+------+
+
+----------------------------------------------------------------------------------
+
+
+5. Display emps with category (as above), empno, ename, sal and dname.
+
+with cte as (select empno, ename, sal, (select dname from dept_staging d where e.deptno=d.deptno) as dname from emp_staging e) select case when sal < 1500 then 'poor' when sal >=1500 and sal <=2500 then 'middle' when sal > 2500 then 'rich' end as status, empno, ename, sal, dname from cte;
+----------------------------------------------------------------------------------
+
+
+6. Count number of emps in each dept for each category (as above).
+
+
+with cte as (select empno, ename, sal, (select dname from dept_staging d where e.deptno=d.deptno) as dname, case when sal < 1500 then 'poor' when sal >=1500 and sal <=2500 then 'middle' when sal > 2500 then 'rich' end as status from emp_staging e) select dname, status, count(empno) from cte group by dname, status order by dname; 
+
+
++-------------+---------+------+
+|    dname    | status  | _c2  |
++-------------+---------+------+
+| ACCOUNTING  | rich    | 1    |
+| ACCOUNTING  | poor    | 1    |
+| ACCOUNTING  | middle  | 1    |
+| RESEARCH    | rich    | 3    |
+| RESEARCH    | poor    | 2    |
+| SALES       | rich    | 1    |
+| SALES       | poor    | 3    |
+| SALES       | middle  | 2    |
++-------------+---------+------+
